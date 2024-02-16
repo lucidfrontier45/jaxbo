@@ -1,8 +1,8 @@
 import jax
 import jax.numpy as jnp
-from jax.numpy import linalg
+from jax.numpy.linalg import inv, slogdet
 from jax.scipy.linalg import solve
-from jax.scipy.optimize import minimize
+from jaxopt import GradientDescent
 from jaxtyping import Array, Float
 
 
@@ -17,20 +17,18 @@ rbf_vector = jax.jit(jax.vmap(rbf, in_axes=(0, None, None, None)))
 rbf_matrix = jax.jit(jax.vmap(rbf_vector, in_axes=(None, 0, None, None)))
 
 
-def _log_likelihood(
-    alpha: float,
-    beta: float,
-    gamma: float,
+def _objective(
+    params: Float[Array, "2"],
     X: Float[Array, "n d"],
     y: Float[Array, " n"],
 ):
+    # Compute the negative log likelihood
+    # constant term is omitted
+    alpha, beta, gamma = jnp.exp(params)
     n = y.shape[0]
-    K = rbf_matrix(X, X, alpha, beta) + gamma * jax.numpy.eye(n)
-    return -0.5 * (
-        y.dot(solve(K, y, assume_a="pos"))
-        + linalg.slogdet(K)[1]
-        + n * jax.numpy.log(2 * jax.numpy.pi)
-    )
+    K = rbf_matrix(X, X, alpha, beta) + gamma * jnp.identity(n)
+    neg_log_lik = y.dot(solve(K, y, assume_a="pos")) + slogdet(K)[1]
+    return neg_log_lik / n
 
 
 class GaussianProcessRegression:
@@ -43,19 +41,16 @@ class GaussianProcessRegression:
         # Compute the inverse of the covariance matrix
         self.X = X
         n, _d = X.shape
-        K = rbf_matrix(X, X, self.alpha, self.beta) + self.gamma * jax.numpy.eye(n)
-        self.K_inv_ = linalg.inv(K)
+        K = rbf_matrix(X, X, self.alpha, self.beta) + self.gamma * jnp.identity(n)
+        self.K_inv_ = inv(K)
         self.K_inv_y_ = self.K_inv_.dot(y)
 
     def fit(self, X: Float[Array, "n d"], y: Float[Array, " n"], optimize: bool = True):
         if optimize:
-            x0 = jnp.array([self.alpha, self.beta, self.gamma])
-            res = minimize(
-                lambda x: -_log_likelihood(x[0], x[1], x[2], X, y),
-                x0=x0,
-                method="BFGS",
-            )
-            self.alpha, self.beta, self.gamma = res.x
+            x0 = jnp.log(jnp.array([self.alpha, self.beta, self.gamma]))
+            optimizer = GradientDescent(_objective, jit=True, stepsize=1e-5)
+            params, _state = optimizer.run(x0, X, y)
+            self.alpha, self.beta, self.gamma = jnp.exp(params)
         self._fit(X, y)
 
     def predict_one(self, x: Float[Array, " d"]):

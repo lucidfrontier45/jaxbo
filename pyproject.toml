@@ -7,9 +7,9 @@ dynamic = ["version"]
 requires-python = ">=3.11"
 dependencies = [
     "jax>=0.4.24",
-    "pydantic>=2.6.1",
     "jaxtyping>=0.2.25",
     "jaxlib>=0.4.24",
+    "jaxopt>=0.8.3",
 ]
 
 [build-system]
@@ -21,13 +21,7 @@ source = "file"
 path = "src/jaxbo/__init__.py"
 
 [tool.pdm.dev-dependencies]
-dev = [
-    "black>=24.2.0",
-    "ruff>=0.2.1",
-    "pyright>=1.1.350",
-    "pytest-cov>=4.1.0",
-    "matplotlib>=3.8.3",
-]
+dev = ["black>=24.2.0", "ruff>=0.2.1", "pyright>=1.1.350", "pytest-cov>=4.1.0"]
 
 [tool.pdm.scripts]
 black = "black ."
