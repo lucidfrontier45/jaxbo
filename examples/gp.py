@@ -13,12 +13,12 @@ def f(x):
     return a * (d * d).sum() + b
 
 
-n = 100
+n = 50
 key = jrand.PRNGKey(0)
 key, subkey = jrand.split(key)
-X = jrand.normal(subkey, shape=(n, 2))
+X = jrand.uniform(subkey, shape=(n, 2), minval=-5.0, maxval=5.0)
 key, subkey = jrand.split(key)
-y = jax.vmap(f)(X) + jrand.normal(subkey, shape=(n,)) * 2.0
+y = jax.vmap(f)(X) + jrand.normal(subkey, shape=(n,)) * 1.0
 
 gpr = GaussianProcessRegression(alpha=1.0, beta=1.0, gamma=1.0)
 gpr.fit(X, y, optimize=True)
