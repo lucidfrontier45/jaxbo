@@ -8,6 +8,8 @@ requires-python = ">=3.11"
 dependencies = [
     "jax>=0.4.24",
     "pydantic>=2.6.1",
+    "jaxtyping>=0.2.25",
+    "jaxlib>=0.4.24",
 ]
 
 [build-system]
@@ -19,7 +21,13 @@ source = "file"
 path = "src/jaxbo/__init__.py"
 
 [tool.pdm.dev-dependencies]
-dev = ["black>=24.2.0", "ruff>=0.2.1", "pyright>=1.1.350", "pytest-cov>=4.1.0"]
+dev = [
+    "black>=24.2.0",
+    "ruff>=0.2.1",
+    "pyright>=1.1.350",
+    "pytest-cov>=4.1.0",
+    "matplotlib>=3.8.3",
+]
 
 [tool.pdm.scripts]
 black = "black ."
@@ -40,12 +48,15 @@ target-version = ["py311"]
 extend-exclude = "deps"
 
 [tool.ruff]
-select = ["E", "F", "W"]
 target-version = "py311"
 # add directory names to exclude from analysis
 exclude = ["deps"]
 
-[tool.ruff.per-file-ignores]
+[tool.ruff.lint]
+ignore = ["F722"]
+select = ["E", "F", "W"]
+
+[tool.ruff.lint.per-file-ignores]
 "*/__init__.py" = ['F401']
 
 [tool.pyright]
